@@ -2,6 +2,10 @@ from django.db import models
 
 
 class PublishedModel(models.Model):
+    """Базовая (абстрактная) модель;
+    включает общие для всех моедлей атрибуты
+    """
+
     is_published = models.BooleanField(
         default=True,
         verbose_name='Опубликовано',

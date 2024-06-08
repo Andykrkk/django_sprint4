@@ -1,38 +1,59 @@
 from django.urls import include, path
-from django.conf import settings
-from django.conf.urls.static import static
 
 from . import views
 
 app_name = 'blog'
 
-posts = [
-    path('<int:post_id>/', views.post_detail, name='post_detail'),
-    path('create/', views.post_create,
-         name='create_post'),
+posts_urls = [
+    path('<int:post_id>/',
+         views.PostDetailView.as_view(),
+         name='post_detail'
+         ),
+    path('create/',
+         views.PostCreateView.as_view(),
+         name='create_post'
+         ),
+
     path('<int:post_id>/edit/',
-         views.post_update_view,
-         name='edit_post'),
+         views.PostUpdateView.as_view(),
+         name='edit_post'
+         ),
+
     path('<int:post_id>/delete/',
-         views.post_delete, name='delete_post'),
-    path('<int:post_id>/comment/', views.add_comment,
-         name='add_comment'),
-    path('<int:post_id>/edit_comment/<int:comment_id>/',
-         views.edit_comment, name='edit_comment'),
-    path('<int:post_id>/delete_comment/<int:comment_id>/',
-         views.delete_comment, name='delete_comment')
-]
-profile = [
-    path('<str:username>/', views.user_profile,
-         name='profile'),
-    path('edit/', views.profile_edit,
-         name='edit_profile'),
+         views.PostDeleteView.as_view(),
+         name='delete_post'
+         ),
+
+    path('<int:post_id>/comment/',
+         views.CommentCreateView.as_view(),
+         name='add_comment'
+         ),
+
+    path('<int:post_id>/edit_comment/<int:comment_id>',
+         views.CommentUpdateView.as_view(),
+         name='edit_comment'
+         ),
+
+    path('<int:post_id>/delete_comment/<int:comment_id>',
+         views.CommentDeleteView.as_view(),
+         name='delete_comment'
+         )
 ]
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('category/<slug:category_slug>/',
-         views.category_posts, name='category_posts'),
-    path('posts/', include(posts)),
-    path('profile/', include(profile)),
+    path('', views.PostsHomepageView.as_view(), name='index'),
+    path('posts/', include(posts_urls)),
+    path(
+        'edit_profile/', views.ProfileUpdateView.as_view(), name='edit_profile'
+    ),
+    path(
+        'profile/<str:username>/',
+        views.UserProfileDetailView.as_view(),
+        name='profile',
+    ),
+    path(
+        'category/<str:category_slug>/',
+        views.CategoryDetailView.as_view(),
+        name='category_posts',
+    ),
 ]
