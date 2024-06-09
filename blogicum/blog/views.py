@@ -23,13 +23,11 @@ class Index(PostQuerySetMixin, ListView):
     template_name = 'blog/index.html'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = queryset.annotate(
+        return super().get_queryset().annotate(
             comment_count=Count('comments')).order_by('-pub_date')
-        return queryset
 
 
-class PostDetail(DetailView):
+class PostDetail(DetailView, PostMixin):
     """Страница отдельного поста"""
 
     model = Post
@@ -38,24 +36,8 @@ class PostDetail(DetailView):
     pk_url_kwarg = 'post_id'
 
     def get_object(self, queryset=None):
-        object = super().get_object(
-            self.model.objects.select_related(
-                'location', 'category', 'author'
-            ),
-        )
-        if object.author != self.request.user:
-            return get_object_or_404(
-                self.model.objects.select_related(
-                    'location', 'category', 'author'
-                ).filter(
-                    pub_date__lte=timezone.now(),
-                    category__is_published=True,
-                    is_published=True
-                ),
-                pk=self.kwargs['post_id']
-            )
-        return object
-
+        return get_object_or_404(self.model, pk=self.kwargs[self.pk_url_kwarg])
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = CommentForm()
@@ -78,6 +60,9 @@ class CategoryPosts(PostQuerySetMixin, ListView):
     template_name = 'blog/category.html'
     category = None
     paginate_by = INDEX_POST_COUNT
+
+
+
 
     def get_queryset(self):
         self.category = get_object_or_404(
@@ -109,6 +94,9 @@ class ProfileList(PostQuerySetMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['profile'] = User.objects.get(username=self.kwargs['username'])
         return context
+    
+    def get_object(self, queryset=None):
+        return get_object_or_404(self.model, pk=self.kwargs[self.pk_url_kwarg])
 
     def get_queryset(self):
         self.author = get_object_or_404(User, username=self.kwargs['username'])
