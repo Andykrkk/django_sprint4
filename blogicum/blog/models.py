@@ -1,12 +1,15 @@
 from django.db import models
+
 from django.contrib.auth import get_user_model
 
 from core.models import PublishedModel
+
 
 User = get_user_model()
 
 MAXIMUM_LENGTH_STRING = 256
 STR_VIEWS_LENGTH = 20
+COMMENTS_VIEWS_LIMIT = 10
 
 
 class Location(PublishedModel):
@@ -81,6 +84,11 @@ class Post(PublishedModel):
         verbose_name='Категория',
         related_name='posts'
     )
+    image = models.ImageField(
+        'Изображение',
+        upload_to='post_images',
+        blank=True,
+    )
 
     class Meta:
         verbose_name = 'публикация'
@@ -89,3 +97,29 @@ class Post(PublishedModel):
 
     def __str__(self) -> str:
         return self.title[:STR_VIEWS_LENGTH]
+    
+
+class Comment(PublishedModel):
+    text = models.TextField(
+        verbose_name='Текст'
+    )
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        verbose_name='Пост'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        verbose_name = 'коментарий'
+        verbose_name_plural = 'Коментарии'
+        default_related_name = 'comments'
+        ordering = ('created_at',)
+
+    def __str__(self) -> str:
+        return (f'Комментарий {self.author} к посту "{self.post}", '
+                f'текст: {self.text[:COMMENTS_VIEWS_LIMIT]}')
