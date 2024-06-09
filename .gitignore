@@ -153,3 +153,7 @@ sent_emails/
 # шаблоны
 
 templates/
+
+#непонятные картинки
+
+post_images/

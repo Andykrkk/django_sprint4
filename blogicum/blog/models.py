@@ -97,7 +97,7 @@ class Post(PublishedModel):
 
     def __str__(self) -> str:
         return self.title[:STR_VIEWS_LENGTH]
-    
+
 
 class Comment(PublishedModel):
     text = models.TextField(
