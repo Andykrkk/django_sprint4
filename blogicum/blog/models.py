@@ -9,13 +9,14 @@ User = get_user_model()
 MAXIMUM_LENGTH_STRING = 256
 STR_VIEWS_LENGTH = 20
 COMMENTS_VIEWS_LIMIT = 10
+SLUG_LENGTH = 64
 
 
 class Location(PublishedModel):
     """Местоположение"""
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAXIMUM_LENGTH_STRING,
         verbose_name='Название места'
     )
 
@@ -36,7 +37,7 @@ class Category(PublishedModel):
     )
     description = models.TextField(verbose_name='Описание')
     slug = models.SlugField(
-        max_length=64,
+        max_length=SLUG_LENGTH,
         unique=True,
         verbose_name='Идентификатор',
         help_text='Идентификатор страницы для URL; '
