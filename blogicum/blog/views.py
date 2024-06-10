@@ -27,17 +27,33 @@ class Index(PostQuerySetMixin, ListView):
             comment_count=Count('comments')).order_by('-pub_date')
 
 
-class PostDetail(DetailView, PostMixin):
+class PostDetail(DetailView):
     """Страница отдельного поста"""
-
+ 
     model = Post
     template_name = 'blog/detail.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'post_id'
 
     def get_object(self, queryset=None):
-        return get_object_or_404(self.model, pk=self.kwargs[self.pk_url_kwarg])
-    
+        object = super().get_object(
+            self.model.objects.select_related(
+                'location', 'category', 'author'
+            ),
+        )
+        if object.author != self.request.user:
+            return get_object_or_404(
+                self.model.objects.select_related(
+                    'location', 'category', 'author'
+                ).filter(
+                    pub_date__lte=timezone.now(),
+                    category__is_published=True,
+                    is_published=True
+                ),
+                pk=self.kwargs['post_id']
+            )
+        return object
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = CommentForm()
@@ -47,7 +63,7 @@ class PostDetail(DetailView, PostMixin):
             ).order_by('created_at')
         )
         return context
-
+ 
     def get_success_url(self):
         return reverse(
             'blog:profile', kwargs={'username': self.object.author.username}
@@ -60,9 +76,6 @@ class CategoryPosts(PostQuerySetMixin, ListView):
     template_name = 'blog/category.html'
     category = None
     paginate_by = INDEX_POST_COUNT
-
-
-
 
     def get_queryset(self):
         self.category = get_object_or_404(
