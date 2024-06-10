@@ -22,7 +22,8 @@ class PostForm(forms.ModelForm):
 class CommentForm(forms.ModelForm):
 
     text = forms.CharField(
-        widget=forms.Textarea(attrs={'cols': TEXT_AREA_COLS, 'rows': TEXT_AREA_ROWS})
+        widget=forms.Textarea(attrs={'cols': TEXT_AREA_COLS,
+                                     'rows': TEXT_AREA_ROWS})
     )
 
     class Meta:
