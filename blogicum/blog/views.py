@@ -9,7 +9,9 @@ from django.views.generic import (
 )
 
 from blog.models import Category, Comment, Post, User
-from blog.mixins import CommentMixin, PostMixin, PostQuerySetMixin
+from blog.mixins import (CommentMixin, PostMixin,
+                         PostQuerySetMixin,
+                         PostDetailMixin, ProfileListMixin)
 from blog.forms import CommentForm, PostForm, ProfileForm
 
 
@@ -27,43 +29,14 @@ class Index(PostQuerySetMixin, ListView):
             comment_count=Count('comments')).order_by('-pub_date')
 
 
-class PostDetail(DetailView):
+class PostDetail(PostDetailMixin, DetailView):
     """Страница отдельного поста"""
- 
+
     model = Post
     template_name = 'blog/detail.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'post_id'
 
-    def get_object(self, queryset=None):
-        object = super().get_object(
-            self.model.objects.select_related(
-                'location', 'category', 'author'
-            ),
-        )
-        if object.author != self.request.user:
-            return get_object_or_404(
-                self.model.objects.select_related(
-                    'location', 'category', 'author'
-                ).filter(
-                    pub_date__lte=timezone.now(),
-                    category__is_published=True,
-                    is_published=True
-                ),
-                pk=self.kwargs['post_id']
-            )
-        return object
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = CommentForm()
-        context['comments'] = (
-            self.object.comments.select_related(
-                'author'
-            ).order_by('created_at')
-        )
-        return context
- 
     def get_success_url(self):
         return reverse(
             'blog:profile', kwargs={'username': self.object.author.username}
@@ -96,7 +69,7 @@ class CategoryPosts(PostQuerySetMixin, ListView):
         return context
 
 
-class ProfileList(PostQuerySetMixin, ListView):
+class ProfileList(ProfileListMixin, PostQuerySetMixin, ListView):
     """Страница профиля пользователя"""
 
     model = Post
@@ -107,29 +80,9 @@ class ProfileList(PostQuerySetMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['profile'] = User.objects.get(username=self.kwargs['username'])
         return context
-    
+
     def get_object(self, queryset=None):
         return get_object_or_404(self.model, pk=self.kwargs[self.pk_url_kwarg])
-
-    def get_queryset(self):
-        self.author = get_object_or_404(User, username=self.kwargs['username'])
-        if self.request.user.username == self.kwargs['username']:
-            return Post.objects.select_related(
-                'location', 'category', 'author'
-            ).filter(
-                author=self.author
-            ).order_by('-pub_date').annotate(
-                comment_count=Count('comments')
-            )
-
-        return Post.objects.select_related(
-            'location', 'category', 'author'
-        ).filter(
-            author=self.author,
-            pub_date__lte=timezone.now(),
-            is_published=True,
-            category__is_published=True,
-        ).order_by('-pub_date').annotate(comment_count=Count('comments'))
 
 
 class ProfileUpdate(LoginRequiredMixin, UpdateView):
